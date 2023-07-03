@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Probability App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Probability App</h1>
+  <label for="rows">Number of rows (M):</label>
+  <input type="number" id="rows" />
+  <br />
+  <label for="columns">Number of columns (N):</label>
+  <input type="number" id="columns" />
+  <br />
+  <button onclick="createMatrix()">Create Matrix</button>
+  <br /><br />
+  <div id="matrixContainer"></div>
+  <button onclick="calculateResults()">Calculate</button>
+  <br /><br />
+  <div id="results"></div>
+
+  <script>
+    let matrix = [];
+
+    function isNegative(number) {
+      return number < 0;
+    }
+
+    function createMatrix() {
+      const rowsInput = document.getElementById('rows');
+      const columnsInput = document.getElementById('columns');
+      const rows = parseInt(rowsInput.value);
+      const columns = parseInt(columnsInput.value);
+      const matrixContainer = document.getElementById('matrixContainer');
+
+      matrixContainer.innerHTML = '';
+
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < columns; j++) {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = '0';
+          input.step = '0.01';
+
+          const label = document.createElement('label');
+          label.textContent = `P(${i + 1},${j + 1}): `;
+          label.appendChild(input);
+
+          matrixContainer.appendChild(label);
+          matrixContainer.appendChild(document.createElement('br'));
+        }
+      }
+    }
+
+    function getMatrixValues() {
+      const matrixValues = [];
+      const inputs = document.querySelectorAll('#matrixContainer input');
+
+      for (let i = 0; i < inputs.length; i++) {
+        matrixValues.push(parseFloat(inputs[i].value));
+      }
+
+      return matrixValues;
+    }
+
+    function validateMatrixValues() {
+      const matrixValues = getMatrixValues();
+
+      for (let i = 0; i < matrixValues.length; i++) {
+        if (isNegative(matrixValues[i])) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function calculateEntropy(probabilities) {
+      let entropy = 0;
+      for (let probability of probabilities) {
+        entropy += probability * Math.log2(probability);
+      }
+      return -entropy;
+    }
+
+    function calculateJointEntropy(matrix, rows, columns) {
+      let jointEntropy = 0;
+
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < columns; j++) {
+          const probability = matrix[i * columns + j];
+          jointEntropy += probability * Math.log2(probability);
+        }
+      }
+
+      return -jointEntropy;
+    }
+
+    function calculateConditionalEntropy(matrix, rows, columns, probabilities) {
+      let conditionalEntropy = 0;
+
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < columns; j++) {
+          const probability = matrix[i * columns + j];
+          const marginalProbability = probabilities[j];
+          conditionalEntropy += probability * Math.log2(probability / marginalProbability);
+        }
+      }
+
+      return -conditionalEntropy;
+    }
+
+    function calculateKLDivergence(sourceProbs, targetProbs) {
+      let divergence = 0;
+
+      for (let i = 0; i < sourceProbs.length; i++) {
+        divergence += sourceProbs[i] * Math.log2(sourceProbs[i] / targetProbs[i]);
+      }
+
+      return divergence;
+    }
+
+    function calculateResults() {
+      const matrixValues = getMatrixValues();
+
+      if (!validateMatrixValues()) {
+        alert('Negative probabilities are not allowed. Please re-enter the matrix.');
+        return;
+      }
+
+      const rows = parseInt(document.getElementById('rows').value);
+      const columns = parseInt(document.getElementById('columns').value);
+      const marginalX = new Array(rows).fill(0);
+      const marginalY = new Array(columns).fill(0);
+
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < columns; j++) {
+          const probability = matrixValues[i * columns + j];
+          marginalX[i] += probability;
+          marginalY[j] += probability;
+        }
+      }
+
+      const entropyX = calculateEntropy(marginalX);
+      const entropyY = calculateEntropy(marginalY);
+      const jointEntropy = calculateJointEntropy(matrixValues, rows, columns);
+      const conditionalEntropyXGivenY = calculateConditionalEntropy(matrixValues, rows, columns, marginalY);
+      const conditionalEntropyYGivenX = calculateConditionalEntropy(matrixValues, rows, columns, marginalX);
+      const mutualInformation = entropyX + entropyY - jointEntropy;
+      const divergencePXtoPY = calculateKLDivergence(marginalX, marginalY);
+      const divergencePYtoPX = calculateKLDivergence(marginalY, marginalX);
+
+      const results = document.getElementById('results');
+      results.innerHTML = `
+        <p>H(X): ${entropyX}</p>
+        <p>H(Y): ${entropyY}</p>
+        <p>H(X | Y): ${conditionalEntropyXGivenY}</p>
+        <p>H(Y | X): ${conditionalEntropyYGivenX}</p>
+        <p>H(X, Y): ${jointEntropy}</p>
+        <p>H(Y) - H(Y | X): ${entropyY - conditionalEntropyYGivenX}</p>
+        <p>I(X; Y): ${mutualInformation}</p>
+        <p>D(P(x) || P(y)): ${divergencePXtoPY}</p>
+        <p>D(P(y) || P(x)): ${divergencePYtoPX}</p>
+      `;
+    }
+  </script>
+</body>
+</html>

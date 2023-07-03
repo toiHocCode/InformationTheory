@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Huffman and Shannon-Fano Coding</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Huffman and Shannon-Fano Coding</h1>
+    <label for="inputString">Enter a string:</label><br>
+    <textarea id="inputString" placeholder="Enter a string"></textarea><br>
+    <button onclick="encode()">Encode</button><br><br>
+    <h2>Results</h2>
+    <div id="huffmanResult"></div>
+    <div id="shannonFanoResult"></div>
+
+    <script>
+        function encode() {
+            var inputString = document.getElementById("inputString").value;
+            var huffmanEncoded = huffmanEncoding(inputString);
+            var shannonFanoEncoded = shannonFanoEncoding(inputString);
+
+            document.getElementById("huffmanResult").innerHTML = "<strong>Huffman Encoded:</strong> " + huffmanEncoded;
+            document.getElementById("shannonFanoResult").innerHTML = "<strong>Shannon-Fano Encoded:</strong> " + shannonFanoEncoded;
+        }
+
+        function huffmanEncoding(input) {
+            // Count frequency of each character
+            var frequencyMap = {};
+            for (var i = 0; i < input.length; i++) {
+                var char = input.charAt(i);
+                if (frequencyMap[char]) {
+                    frequencyMap[char]++;
+                } else {
+                    frequencyMap[char] = 1;
+                }
+            }
+
+            // Create nodes for each character and assign frequency
+            var nodes = [];
+            for (var char in frequencyMap) {
+                nodes.push({ char: char, frequency: frequencyMap[char] });
+            }
+
+            // Build Huffman tree
+            while (nodes.length > 1) {
+                nodes.sort(function (a, b) {
+                    return a.frequency - b.frequency;
+                });
+                var leftNode = nodes.shift();
+                var rightNode = nodes.shift();
+                var mergedNode = {
+                    char: leftNode.char + rightNode.char,
+                    frequency: leftNode.frequency + rightNode.frequency,
+                    left: leftNode,
+                    right: rightNode
+                };
+                nodes.push(mergedNode);
+            }
+
+            // Generate Huffman codes
+            var huffmanCodes = {};
+            generateHuffmanCodes(nodes[0], "");
+
+            function generateHuffmanCodes(node, code) {
+                if (!node.left && !node.right) {
+                    huffmanCodes[node.char] = code;
+                } else {
+                    generateHuffmanCodes(node.left, code + "0");
+                    generateHuffmanCodes(node.right, code + "1");
+                }
+            }
+
+            // Encode the input string using Huffman codes
+            var encoded = "";
+            for (var i = 0; i < input.length; i++) {
+                encoded += huffmanCodes[input.charAt(i)];
+            }
+
+            return encoded;
+        }
+
+        function shannonFanoEncoding(input) {
+            // Count frequency of each character
+            var frequencyMap = {};
+            for (var i = 0; i < input.length; i++) {
+                var char = input.charAt(i);
+                if (frequencyMap[char]) {
+                    frequencyMap[char]++;
+                } else {
+                    frequencyMap[char] = 1;
+                }
+            }
+
+            // Create nodes for each character and assign frequency
+            var nodes = [];
+            for (var char in frequencyMap) {
+                nodes.push({ char: char, frequency: frequencyMap[char], code: '' });
+            }
+
+            // Sort nodes by frequency in descending order
+            nodes.sort(function (a, b) {
+                return b.frequency - a.frequency;
+            });
+
+            // Build Shannon-Fano tree
+            buildShannonFanoTree(nodes, 0, nodes.length - 1);
+
+            function buildShannonFanoTree(nodes, start, end) {
+                if (start === end) {
+                    return;
+                }
+
+                var mid = findSplitPoint(nodes, start, end);
+
+                for (var i = start; i <= end; i++) {
+                    nodes[i].code += i <= mid ? '0' : '1';
+                }
+
+                buildShannonFanoTree(nodes, start, mid);
+                buildShannonFanoTree(nodes, mid + 1, end);
+            }
+
+            function findSplitPoint(nodes, start, end) {
+                var totalFrequency = 0;
+                for (var i = start; i <= end; i++) {
+                    totalFrequency += nodes[i].frequency;
+                }
+
+                var currentFrequency = 0;
+                var splitPoint = start;
+                var diff = totalFrequency;
+
+                for (var i = start; i <= end; i++) {
+                    var newDiff = Math.abs(totalFrequency - 2 * (currentFrequency + nodes[i].frequency));
+                    if (newDiff < diff) {
+                        diff = newDiff;
+                        splitPoint = i;
+                    }
+                    currentFrequency += nodes[i].frequency;
+                }
+
+                return splitPoint;
+            }
+
+            // Generate Shannon-Fano codes
+            var shannonFanoCodes = {};
+            for (var i = 0; i < nodes.length; i++) {
+                shannonFanoCodes[nodes[i].char] = nodes[i].code;
+            }
+
+            // Encode the input string using Shannon-Fano codes
+            var encoded = "";
+            for (var i = 0; i < input.length; i++) {
+                encoded += shannonFanoCodes[input.charAt(i)];
+            }
+
+            // Calculate cipher efficiency and redundancy
+            var inputBits = input.length * 8;
+            var encodedBits = encoded.length;
+            var efficiency = ((inputBits - encodedBits) / inputBits) * 100;
+            var redundancy = 100 - efficiency;
+
+            encoded += "<br><br><strong>Cipher Efficiency:</strong> " + efficiency.toFixed(2) + "%";
+            encoded += "<br><strong>Redundancy:</strong> " + redundancy.toFixed(2) + "%";
+
+            return encoded;
+        }
+    </script>
+</body>
+</html>

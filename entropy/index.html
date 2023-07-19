@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+i<!DOCTYPE html>
 <html>
 <head>
-  <title>Probability App</title>
+  <title>Probability</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +22,7 @@
   <script>
     let matrix = [];
 
-    function isNegative(number) {
+    function Negative(number) {
       return number < 0;
     }
 
@@ -67,7 +67,7 @@
       const matrixValues = getMatrixValues();
 
       for (let i = 0; i < matrixValues.length; i++) {
-        if (isNegative(matrixValues[i])) {
+        if (Negative(matrixValues[i])) {
           return false;
         }
       }
@@ -84,31 +84,41 @@
     }
 
     function calculateJointEntropy(matrix, rows, columns) {
-      let jointEntropy = 0;
+  let jointEntropy = 0;
 
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < columns; j++) {
-          const probability = matrix[i * columns + j];
-          jointEntropy += probability * Math.log2(probability);
-        }
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < columns; j++) {
+      const probability = matrix[i * columns + j];
+
+      // Check if the probability is zero
+      if (probability !== 0) {
+        jointEntropy += probability * Math.log2(probability);
       }
-
-      return -jointEntropy;
     }
+  }
+
+  return -jointEntropy;
+}
+
 
     function calculateConditionalEntropy(matrix, rows, columns, probabilities) {
-      let conditionalEntropy = 0;
+  let conditionalEntropy = 0;
 
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < columns; j++) {
-          const probability = matrix[i * columns + j];
-          const marginalProbability = probabilities[j];
-          conditionalEntropy += probability * Math.log2(probability / marginalProbability);
-        }
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < columns; j++) {
+      const probability = matrix[i * columns + j];
+      const marginalProbability = probabilities[j];
+
+      // Check if the probability or marginal probability is zero
+      if (probability !== 0 && marginalProbability !== 0) {
+        conditionalEntropy += probability * Math.log2(probability / marginalProbability);
       }
-
-      return -conditionalEntropy;
     }
+  }
+
+  return -conditionalEntropy;
+}
+
 
     function calculateKLDivergence(sourceProbs, targetProbs) {
       let divergence = 0;
@@ -124,7 +134,7 @@
       const matrixValues = getMatrixValues();
 
       if (!validateMatrixValues()) {
-        alert('Negative probabilities are not allowed. Please re-enter the matrix.');
+        alert('Negative probabilities are not allowed. Please enter a different matrix.');
         return;
       }
 
